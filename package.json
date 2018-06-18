@@ -1,0 +1,24 @@
+{
+  "name": "hw12-famazon",
+  "version": "1.0.0",
+  "description": "mySQL homework",
+  "main": "fAmazon.js",
+  "dependencies": {
+    "inquirer": "^6.0.0",
+    "mysql": "^2.15.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RoyLoLo/hw12-fAmazon.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RoyLoLo/hw12-fAmazon/issues"
+  },
+  "homepage": "https://github.com/RoyLoLo/hw12-fAmazon#readme"
+}
