@@ -1,11 +1,13 @@
 
-var mysql = require(`mysql`);
-var inquirer = require(`inquirer`)
-var invdata = [];
-var available;
-var quantity;
-var itemindex;
-var connection = mysql.createConnection({
+const mysql = require(`mysql`);
+const inquirer = require(`inquirer`);
+const chalk = require("chalk");
+let invdata = [];
+let available;
+let quantity;
+let itemindex;
+let onlist;
+let connection = mysql.createConnection({
   host: `localhost`,
   port: 3306,
   user: `root`,
@@ -39,7 +41,7 @@ adminEnter = () => {
     message: `You Have 1 try to enter a password`
   }]).then(function (ans) {
     if (ans.pw !== `admin1`) {
-      console.log(`Incorrect Password... Please try again`); 
+      console.log(chalk.red(`Incorrect Password... Please try again`)); 
       console.clear();
       choice();
     } else {
@@ -140,7 +142,7 @@ adminadd = () => {
         function(err,res){
           if (err) throw err;
           console.clear();
-          console.log(`Item Inserted into database.`);  
+          console.log(chalk.blue(`Item Inserted into database.`));  
           admin();
       })
      //add item function
@@ -160,7 +162,7 @@ admindelete = () => {
       connection.query(`DELETE FROM products WHERE item_id = ${parseInt(ans.delete)}`,
       function (err, res) {
         console.clear();
-        console.log("item has been deleted.");
+        console.log(chalk.blue("item has been deleted."));
         admin();
     });     
     });
@@ -173,7 +175,7 @@ customerEnter = () => {
     message: `Welcome to fAmazon!\nwould you like to purchase something?`
   }]).then(function (ans) {
     if (!ans.continue) {
-      console.log(`Thank You for visiting fAmazon, come again soon.`)
+      console.log(chalk.yellow(`Thank You for visiting fAmazon, come again soon.`));
       console.clear();
       choice();
     } else {
@@ -196,38 +198,45 @@ store = () => {
   ]).then(function (ans) {
     console.clear();
     finditemindex(ans);
-    if (available < parseInt(ans.quant)) {
-      console.log(`You have ordered more than stocked, Please return and order ${available} or less.`)
-      customerEnter()
-    }else if(ans.buy === `admin1` && ans.quant === `admin1`){
-      adminEnter();
-    } else{ 
-      inquirer.prompt([{
-        type: `confirm`,
-        name: `confirm`,
-        message: `\nYour total is:$${invdata[itemindex].price * ans.quant} 
-                  \nYou orderd: ${ans.quant} ${invdata[itemindex].product_name}
-                  \nWould you like to proceed`
-      }]).then(function (ans) {
-        if (ans.confirm) {
-          updatedb(invdata[itemindex].item_id, `stock`, (invdata[itemindex].stock - parseInt(quantity)));
-          console.log(`Your order has been successfully placed!
-                      \nThank for shopping at fAmazon.`);
-        } else {
-          console.log(`Your Order has been canceled.`);
-          customerEnter();
-        }; //end else
-      }) // .then
-    } //end outter else
-  }); //end of inner inquirer.promt
-}; //end customer()
+    if (!onlist){
+      console.clear();
+      console.log(chalk.red("Your selection is not on the list, please try again."));
+      displayitems(store);
+    }else{
+      if (available < parseInt(ans.quant)) {
+        console.log(chalk.red(`You have ordered more than stocked, Please return and order ${available} or less.`));
+        customerEnter()
+      } else if (ans.buy === `admin1` && ans.quant === `admin1`) {
+        adminEnter();
+      } else {
+        inquirer.prompt([{
+          type: `confirm`,
+          name: `confirm`,
+          message: `\nYour total is:$${invdata[itemindex].price * ans.quant} 
+              \nYou orderd: ${ans.quant} ${invdata[itemindex].product_name}
+              \nWould you like to proceed`
+        }]).then(function (ans) {
+          if (ans.confirm) {
+            updatedb(invdata[itemindex].item_id, `stock`, (invdata[itemindex].stock - parseInt(quantity)));
+            console.log(chalk.green(`Your order has been successfully placed!
+                      \nThank for shopping at fAmazon.`));
+          } else {
+            console.log(chalk.red(`Your Order has been canceled.`));
+            customerEnter();
+          }; //end inner else
+        }); //end.then
+      }; //end outter else
+    };
+    
+}); //end .then
+};//end store()
 
 displayitems = (pfunc) => {
   connection.query(`Select * FROM products`, function (err, res) {
     if (err) throw err;
     invdata = res;
     for (i = 0; i < res.length; i++) {
-      console.log(`Item#: ${res[i].item_id} || Item: ${res[i].product_name} || Price: $${res[i].price}`);
+      console.log(chalk.blue(`Item#: ${res[i].item_id} || Item: ${res[i].product_name} || Price: $${res[i].price}`));
       console.log(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`)
     }; //end for loop
     //customer();
@@ -238,11 +247,13 @@ displayitems = (pfunc) => {
 }; //end display()
 
 finditemindex = (ans) => {
+  onlist = false;
   for (j = 0; j < invdata.length; j++) {
     if (invdata[j].item_id === parseInt(ans.buy)) {
       itemindex = j;
       available = invdata[j].stock;
       quantity = ans.quant;
+      onlist = true;
     } //end if 
   } //end for loop j
 }; //end finditemindex();
@@ -260,12 +271,14 @@ updatedb = (whatid, tochange, newchange) => {
   function(err, res) {
     customerEnter();
   });
-} //end updatedb()
+}; //end updatedb()
 
 
 //this starts the app in node
 connection.connect(function (err) {
-  if (err) throw err;
+ 
+ 
   choice();
-});
 
+
+});
