@@ -26,7 +26,7 @@ choice = () => {
       customerEnter();
     } else {
       console.log(`Goodbye`);
-      //connection.end();
+      connection.end();
       console.clear();
     };
   });
@@ -38,12 +38,13 @@ adminEnter = () => {
     name: `pw`,
     message: `You Have 1 try to enter a password`
   }]).then(function (ans) {
-    if (ans.pw === `admin1`) {
-      admin();
-    } else {
-      console.log(`Incorrect Password... Please try again`);
-      //connection.end();
+    if (ans.pw !== `admin1`) {
+      console.log(`Incorrect Password... Please try again`); 
       console.clear();
+      choice();
+    } else {
+      admin();
+      
     };
   });
 }; //end adminEnter()
@@ -53,25 +54,22 @@ admin = () => {
     type: `list`,
     name: `admin`,
     message: `What would you like to do`,
-    choices: [`Add New Item`, `Remove Item`, `Edit Inventory`, `Enter the Store`,`Exit fAmazon`]
+    choices: [`Add New Item`, `Remove Item`, `Edit Inventory`, `Enter the Store (to quit)`]
   }]).then(function (ans) {
     if (ans.admin === `Add New Item`) {
       adminadd();
     } else if (ans.admin === `Remove Item`) {
       displayitems(admindelete);
       console.log(`remove an item`);
-      adminEnter();
     } else if (ans.admin === `Edit Inventory`) {
       displayitems(adminedit);  
-      
+      updateadmin();
+      console.clear()
       console.log(`update inventory`);
       adminEnter();
-    } else if (ans.admin === `Enter the Store`){
-      customerEnter();
     } else{
-      //connection.end();
-      console.clear();
-    };
+      choice();
+  };
   });
 } //end admin()
 
@@ -131,7 +129,6 @@ adminadd = () => {
        message : `Please enter a price for the item.`
      }
    ]).then(function (ans) {
-    console.clear();
     connection.query("INSERT INTO products SET ?", 
       {
           product_name : ans.product_name,
@@ -141,9 +138,10 @@ adminadd = () => {
           stock : parseInt(ans.stock)
       },
         function(err,res){
+          if (err) throw err;
           console.clear();
-        console.log(`Item Inserted into database.`);  
-        displayitems(adminEnter);
+          console.log(`Item Inserted into database.`);  
+          admin();
       })
      //add item function
    })
@@ -161,10 +159,10 @@ admindelete = () => {
         
       connection.query(`DELETE FROM products WHERE item_id = ${parseInt(ans.delete)}`,
       function (err, res) {
-        console.log(err);
-      console.log("item has been deleted.");
-      });
-      admin();
+        console.clear();
+        console.log("item has been deleted.");
+        admin();
+    });     
     });
 };//end admindelete()
 
@@ -176,8 +174,8 @@ customerEnter = () => {
   }]).then(function (ans) {
     if (!ans.continue) {
       console.log(`Thank You for visiting fAmazon, come again soon.`)
-      //connection.end();
       console.clear();
+      choice();
     } else {
       displayitems(store);
     } //end else
@@ -207,7 +205,7 @@ store = () => {
       inquirer.prompt([{
         type: `confirm`,
         name: `confirm`,
-        message: `\nYour total is: ${invdata[itemindex].price * ans.quant} 
+        message: `\nYour total is:$${invdata[itemindex].price * ans.quant} 
                   \nYou orderd: ${ans.quant} ${invdata[itemindex].product_name}
                   \nWould you like to proceed`
       }]).then(function (ans) {
