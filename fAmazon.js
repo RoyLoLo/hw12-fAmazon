@@ -26,7 +26,8 @@ choice = () => {
       customerEnter();
     } else {
       console.log(`Goodbye`);
-      connection.end();
+      //connection.end();
+      console.clear();
     };
   });
 }; //end choice()
@@ -41,7 +42,8 @@ adminEnter = () => {
       admin();
     } else {
       console.log(`Incorrect Password... Please try again`);
-      connection.end();
+      //connection.end();
+      console.clear();
     };
   });
 }; //end adminEnter()
@@ -51,57 +53,62 @@ admin = () => {
     type: `list`,
     name: `admin`,
     message: `What would you like to do`,
-    choices: [`Add New Item`, `Remove Item`, `Edit Inventory`, `Enter the Store`]
+    choices: [`Add New Item`, `Remove Item`, `Edit Inventory`, `Enter the Store`,`Exit fAmazon`]
   }]).then(function (ans) {
     if (ans.admin === `Add New Item`) {
       adminadd();
-      console.log(`New item added.`);
     } else if (ans.admin === `Remove Item`) {
-      displayitems();
-      admindelete();
+      displayitems(admindelete);
       console.log(`remove an item`);
       adminEnter();
     } else if (ans.admin === `Edit Inventory`) {
-      displayitems();  
-      inquirer.prompt([
-          {
-            type : `list`,
-            name : `selectedit`,
-            message : `What do you want to edit?`,
-            choices :[`price`,'stock',`product_name`,`product_mfg`,`department_name`]
-          },
-          {
-            type : `input`,
-            name : `itemedit`,
-            message : `Select item to edit by id number.`
-          },
-          {
-            type : `input`,
-            name : `newchange`,
-            message : `Enter the new value`
-          }
-        ]).then(function(ans){
-          if (ans.selectedit === `price` || ans.selectedit === `stock`){
-              let newchange = parseInt(ans.newchange);
-          }
-          else{
-              let newchange = ans.newchange;
-          };
-          updatedb(ans.itemedit,ans.selectedit,newchange)
-        })//end Edit inventory
+      displayitems(adminedit);  
+      
       console.log(`update inventory`);
       adminEnter();
-    } else {
+    } else if (ans.admin === `Enter the Store`){
       customerEnter();
+    } else{
+      //connection.end();
+      console.clear();
     };
   });
 } //end admin()
 
+adminedit = () =>{
+  inquirer.prompt([{
+    type: `list`,
+      name : `selectedit`,
+        message : `What do you want to edit?`,
+          choices : [`price`, 'stock', `product_name`, `product_mfg`, `department_name`]
+  },
+  {
+    type: `input`,
+      name : `itemedit`,
+        message : `Select item to edit by id number.`
+  },
+  {
+    type: `input`,
+      name : `newchange`,
+        message : `Enter the new value`
+  }
+        ]).then(function (ans) {
+    console.clear();
+    if (ans.selectedit === `price` || ans.selectedit === `stock`) {
+      let newchange = parseInt(ans.newchange);
+    }
+    else {
+      let newchange = ans.newchange;
+    };
+    updatedb(ans.itemedit, ans.selectedit, newchange)
+  })//end Edit inventory
+
+}
 adminadd = () => {
    inquirer.prompt([{
        type: `input`,
-       name: `item`,
-       message: `enter a new product.`,
+       name: `product_name`,
+       message: `enter a new product by name.`,
      },
      {
        type: `input`,
@@ -110,12 +117,12 @@ adminadd = () => {
      },
      {
        type : `input`,
-       name : `dept`,
+       name : `department_name`,
        message : `Please enter the department.` 
      },
      {
       typer : `input`,
-      name : `mfg`,
+      name : `product_mfg`,
       message : `Please enter the manufacturer of the item.`
      },
      {
@@ -124,73 +131,60 @@ adminadd = () => {
        message : `Please enter a price for the item.`
      }
    ]).then(function (ans) {
-      connection.query(`INSERT INTO prodcuts SET ?`,
+    console.clear();
+    connection.query("INSERT INTO products SET ?", 
       {
-          product_name : ans.item,
-          product_mfg : ans.mfg,
-          department_name :ans.dept,
-          price : ans.price,
-          stock : ans.stock
+          product_name : ans.product_name,
+          product_mfg : ans.product_mfg,
+          department_name : ans.department_name,
+          price : parseInt(ans.price),
+          stock : parseInt(ans.stock)
       },
         function(err,res){
-        console.log(`Item Inserted into database.`)
-          dispalyitem();
-          adminEnter();
+          console.clear();
+        console.log(`Item Inserted into database.`);  
+        displayitems(adminEnter);
       })
      //add item function
    })
 };//end adminadd()
 
 admindelete = () => {
-
+  
   inquirer.prompt([
   {
     type : `input`,
     name : `delete`,
-    message : `Select which item you want to delete`
+    message : `Select which item you want to delete by item#.`
   }
 ]).then(function(ans){
-  let itemtodelete = ans.delete;
-        inquirer.prompt([
-          {
-            input : `confirm`,
-            name : `confirmdelete`,
-            message : `Are You sure you want to Delete`
-          }
-        ]).then(function(ans){
-          if (ans.confirmdelete){
-            connection.query(`DELETE FROM products WHERE ?`,
-              {
-                item_id: itemtodelete
-              },
-              function (err, res) {
-
-              })
-          }
-          else{
-            admin();
-          };
-        });
-});
+        
+      connection.query(`DELETE FROM products WHERE item_id = ${parseInt(ans.delete)}`,
+      function (err, res) {
+        console.log(err);
+      console.log("item has been deleted.");
+      });
+      admin();
+    });
 };//end admindelete()
 
 customerEnter = () => {
   inquirer.prompt([{
     type: `confirm`,
     name: `continue`,
-    message: `would you like to purchase something?`
+    message: `Welcome to fAmazon!\nwould you like to purchase something?`
   }]).then(function (ans) {
     if (!ans.continue) {
       console.log(`Thank You for visiting fAmazon, come again soon.`)
-      connection.end();
+      //connection.end();
+      console.clear();
     } else {
-      displayitems();
-      customer();
+      displayitems(store);
     } //end else
   }); //end outter inquirer.prompt
 }; //end customerEnter()
 
-customer = () => { 
+store = () => { 
   inquirer.prompt([{
       type: `input`,
       name: `buy`,
@@ -202,13 +196,14 @@ customer = () => {
       message: `How many would you like`,
     }
   ]).then(function (ans) {
+    console.clear();
     finditemindex(ans);
     if (available < parseInt(ans.quant)) {
       console.log(`You have ordered more than stocked, Please return and order ${available} or less.`)
       customerEnter()
     }else if(ans.buy === `admin1` && ans.quant === `admin1`){
       adminEnter();
-    } else {  
+    } else{ 
       inquirer.prompt([{
         type: `confirm`,
         name: `confirm`,
@@ -229,7 +224,7 @@ customer = () => {
   }); //end of inner inquirer.promt
 }; //end customer()
 
-displayitems = () => {
+displayitems = (pfunc) => {
   connection.query(`Select * FROM products`, function (err, res) {
     if (err) throw err;
     invdata = res;
@@ -238,6 +233,9 @@ displayitems = () => {
       console.log(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`)
     }; //end for loop
     //customer();
+   if(pfunc !== "undefined"){
+     pfunc();
+   }
   }); //end .query
 }; //end display()
 
@@ -262,10 +260,7 @@ updatedb = (whatid, tochange, newchange) => {
     }
   ], 
   function(err, res) {
-    console.log(res);
-    console.log(whatid,tochange,newchange);
     customerEnter();
-  
   });
 } //end updatedb()
 
