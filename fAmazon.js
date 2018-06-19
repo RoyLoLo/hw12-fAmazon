@@ -7,6 +7,7 @@ let available;
 let quantity;
 let itemindex;
 let onlist;
+let newchange;
 let connection = mysql.createConnection({
   host: `localhost`,
   port: 3306,
@@ -79,28 +80,34 @@ adminedit = () =>{
   inquirer.prompt([{
     type: `list`,
       name : `selectedit`,
-        message : `What do you want to edit?`,
-          choices : [`price`, 'stock', `product_name`, `product_mfg`, `department_name`]
+      message : `What do you want to edit?`,
+      choices : [`price`, 'stock', `product_name`, `product_mfg`, `department_name`]
   },
   {
     type: `input`,
-      name : `itemedit`,
-        message : `Select item to edit by id number.`
+    name : `itemedit`,
+    message : `Select item to edit by id number.`
   },
   {
     type: `input`,
-      name : `newchange`,
-        message : `Enter the new value`
+    name : `newchange`,
+    message : `Enter the new value`
   }
         ]).then(function (ans) {
     console.clear();
-    if (ans.selectedit === `price` || ans.selectedit === `stock`) {
-      let newchange = parseInt(ans.newchange);
+    if (ans.selectedit === `price`) {
+      newchange = (parseFloat(ans.newchange).toFixed(2));
+      console.log(newchange);
+    }
+    else if (ans.selectedit === `stock`) {
+      newchange = parseInt(ans.newchange)
     }
     else {
-      let newchange = ans.newchange;
+       newchange = ans.newchange;
     };
     updatedb(ans.itemedit, ans.selectedit, newchange)
+    console.log(chalk.blue(`Your changes have been made.`))
+    adminEnter();
   })//end Edit inventory
 
 }
@@ -269,7 +276,7 @@ updatedb = (whatid, tochange, newchange) => {
     }
   ], 
   function(err, res) {
-    customerEnter();
+   
   });
 }; //end updatedb()
 
